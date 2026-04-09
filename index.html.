@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi - dimensional arrays</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Chosen Palette: Warm sand neutrals with cobalt and amber accents for a modern glass dashboard. -->
+    <!-- Application Structure Plan: This SPA is a focused translation of the source report "Inserting and Deleting in Multi-Dimensional Arrays". The structure is divided into: 1. Fundamentals (Definitions), 2. The Logic of Insertion (Row vs Col), 3. Deletion Mechanisms, 4. Step-by-Step Algorithm, 5. Interactive Workshop (Real-time shifting), 6. Efficiency Analysis, and 7. Final Assessment (10 MCQ Knowledge Check). This flow guides the user from basic concepts to practical laboratory application and finally to self-certification. -->
+    <!-- Visualization & Content Choices: 2D Interactive Grid -> Goal: Change -> Method: Dynamic HTML Grid -> Interaction: Operation Buttons -> Justification: Directly visualizes the shifting logic described in the report. Comparison Table -> Goal: Compare -> Method: Responsive HTML Table -> Justification: Replicates the source's efficiency comparison for quick reference. Complexity Graph -> Goal: Change -> Method: Chart.js -> Justification: Illustrates the O(N*M) scalability mentioned in the text. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+
+        :root {
+            --bg-top: #fff8ee;
+            --bg-bottom: #eef6ff;
+            --surface: rgba(255, 255, 255, 0.7);
+            --surface-strong: rgba(255, 255, 255, 0.94);
+            --surface-soft: rgba(250, 248, 244, 0.84);
+            --line: rgba(15, 76, 129, 0.12);
+            --ink: #142238;
+            --muted: #5f6f86;
+            --primary: #0f4c81;
+            --primary-strong: #0c3b65;
+            --primary-soft: rgba(15, 76, 129, 0.12);
+            --sky-soft: rgba(249, 115, 22, 0.12);
+            --danger-soft: rgba(225, 29, 72, 0.08);
+            --console: #081a31;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            scroll-behavior: smooth;
+            background:
+                radial-gradient(circle at 8% 12%, rgba(14, 165, 233, 0.18), transparent 28%),
+                radial-gradient(circle at 88% 10%, rgba(249, 115, 22, 0.2), transparent 24%),
+                radial-gradient(circle at 50% 88%, rgba(245, 158, 11, 0.14), transparent 24%),
+                linear-gradient(135deg, var(--bg-top) 0%, #fffdf8 38%, var(--bg-bottom) 100%);
+            color: var(--ink);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            border-radius: 9999px;
+            filter: blur(90px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::before {
+            width: 22rem;
+            height: 22rem;
+            top: -7rem;
+            left: -6rem;
+            background: rgba(56, 189, 248, 0.18);
+            animation: float-ambient 16s ease-in-out infinite;
+        }
+
+        body::after {
+            width: 18rem;
+            height: 18rem;
+            right: -5rem;
+            bottom: 6%;
+            background: rgba(251, 146, 60, 0.18);
+            animation: float-ambient 20s ease-in-out infinite reverse;
+        }
+
+        header, main, aside, .page-shell { position: relative; z-index: 1; }
+        h1, h2, h3, h4, .font-black, .font-extrabold { font-family: 'Space Grotesk', sans-serif; }
+        .hide-section { display: none; }
+        .section-enter { animation: section-reveal 0.55s cubic-bezier(0.22, 1, 0.36, 1); }
+        .grid-cell { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .chart-container { position: relative; width: 100%; max-width: 700px; margin: auto; height: 320px; }
+
+        .glass-topbar {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 251, 246, 0.6) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.82);
+            border-radius: 2rem;
+            box-shadow: 0 30px 90px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+        }
+
+        .glass-nav {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.68) 0%, rgba(255, 250, 245, 0.56) 100%);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.82);
+            box-shadow: 0 24px 70px rgba(15, 23, 42, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+        }
+
+        .section-panel {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 250, 244, 0.62) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.84);
+            box-shadow: 0 34px 90px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-panel::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto auto 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(15, 76, 129, 0.44), rgba(249, 115, 22, 0.34), rgba(245, 158, 11, 0.2));
+        }
+
+        .section-panel::after {
+            content: "";
+            position: absolute;
+            width: 20rem;
+            height: 20rem;
+            top: -8rem;
+            right: -6rem;
+            background: radial-gradient(circle, rgba(249, 115, 22, 0.14), transparent 68%);
+            pointer-events: none;
+        }
+
+        .section-panel > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .soft-panel {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(250, 248, 244, 0.86) 100%);
+            border: 1px solid rgba(15, 76, 129, 0.08);
+            box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+
+        .soft-panel:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 26px 48px rgba(15, 23, 42, 0.08);
+            border-color: rgba(249, 115, 22, 0.16);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.55rem 0.9rem;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(249, 115, 22, 0.16);
+            color: var(--primary-strong);
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 12px 24px rgba(15, 23, 42, 0.04);
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 0.55rem;
+            height: 0.55rem;
+            border-radius: 9999px;
+            background: linear-gradient(135deg, #0f4c81 0%, #fb923c 100%);
+            box-shadow: 0 0 0 0.22rem rgba(249, 115, 22, 0.12);
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.65rem 0.95rem;
+            border-radius: 9999px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.84) 0%, rgba(255, 249, 243, 0.74) 100%);
+            border: 1px solid rgba(249, 115, 22, 0.1);
+            color: var(--muted);
+            font-size: 0.84rem;
+            font-weight: 700;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+
+        .chip:hover {
+            transform: translateY(-2px);
+            border-color: rgba(249, 115, 22, 0.2);
+            box-shadow: 0 18px 30px rgba(15, 23, 42, 0.06);
+        }
+
+        .hero-stat {
+            padding: 1.15rem;
+            border-radius: 1.4rem;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 248, 240, 0.82) 100%);
+            border: 1px solid rgba(249, 115, 22, 0.08);
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .hero-stat:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 38px rgba(15, 23, 42, 0.08);
+        }
+
+        .hero-stat strong {
+            display: block;
+            font-size: 0.8rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--primary-strong);
+            margin-bottom: 0.4rem;
+        }
+
+        .hero-stat span {
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.55;
+        }
+
+        .nav-note {
+            padding: 1rem;
+            border-radius: 1.5rem;
+            background: linear-gradient(135deg, rgba(15, 76, 129, 0.12) 0%, rgba(249, 115, 22, 0.08) 100%);
+            border: 1px solid rgba(249, 115, 22, 0.12);
+            box-shadow: 0 12px 26px rgba(15, 23, 42, 0.05);
+        }
+
+        .step-card {
+            padding: 1.25rem;
+            border-radius: 1.5rem;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(254, 248, 241, 0.82) 100%);
+            border: 1px solid rgba(249, 115, 22, 0.08);
+            box-shadow: 0 12px 26px rgba(15, 23, 42, 0.05);
+        }
+
+        .step-index {
+            width: 2.6rem;
+            height: 2.6rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            border-radius: 9999px;
+            background: linear-gradient(135deg, #0f4c81 0%, #fb923c 100%);
+            color: white;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            box-shadow: 0 14px 28px rgba(15, 76, 129, 0.22);
+        }
+
+        .live-stat {
+            padding: 1rem 1.1rem;
+            border-radius: 1.4rem;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 248, 241, 0.84) 100%);
+            border: 1px solid rgba(249, 115, 22, 0.08);
+            box-shadow: 0 12px 26px rgba(15, 23, 42, 0.05);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+
+        .live-stat:hover {
+            transform: translateY(-4px);
+            border-color: rgba(249, 115, 22, 0.16);
+            box-shadow: 0 20px 38px rgba(15, 23, 42, 0.08);
+        }
+
+        .live-stat p {
+            margin-bottom: 0.45rem;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--primary-strong);
+        }
+
+        .live-stat h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--ink);
+            line-height: 1.2;
+        }
+
+        .live-stat .subtle {
+            font-size: 0.88rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .code-panel,
+        .monitor-panel {
+            background: linear-gradient(135deg, #09162a 0%, #123156 52%, #1b2b43 100%);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            box-shadow: 0 28px 70px rgba(2, 6, 23, 0.26);
+        }
+
+        .brand-mark {
+            background: linear-gradient(135deg, #0f4c81 0%, #fb923c 100%);
+            box-shadow: 0 20px 34px rgba(15, 76, 129, 0.24);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.65rem 0.9rem;
+            border-radius: 9999px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.84) 0%, rgba(255, 248, 241, 0.76) 100%);
+            border: 1px solid rgba(249, 115, 22, 0.12);
+            color: var(--muted);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+        }
+
+        .status-dot {
+            width: 0.55rem;
+            height: 0.55rem;
+            border-radius: 9999px;
+            background: #22c55e;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.38);
+            animation: pulse-live 1.8s infinite;
+        }
+
+        .nav-btn {
+            color: var(--muted);
+            border: 1px solid transparent;
+            background: transparent;
+            transition: transform 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+        }
+
+        .nav-btn:hover {
+            transform: translateX(4px);
+            background: rgba(255, 255, 255, 0.78);
+            border-color: rgba(148, 163, 184, 0.14);
+            color: var(--ink);
+        }
+
+        .nav-active {
+            background: linear-gradient(135deg, rgba(15, 76, 129, 0.12) 0%, rgba(249, 115, 22, 0.14) 100%);
+            color: var(--primary-strong) !important;
+            border-color: rgba(249, 115, 22, 0.18) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 14px 24px rgba(15, 23, 42, 0.05);
+        }
+
+        .progress-track {
+            background: rgba(148, 163, 184, 0.18);
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #0f4c81 0%, #fb923c 100%);
+            box-shadow: 0 0 18px rgba(249, 115, 22, 0.24);
+        }
+
+        .action-primary,
+        .action-danger,
+        .action-dark,
+        .action-ghost {
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
+        }
+
+        .action-primary {
+            background: linear-gradient(135deg, #0f4c81 0%, #fb923c 100%);
+            box-shadow: 0 18px 34px rgba(15, 76, 129, 0.24);
+        }
+
+        .action-primary:hover,
+        .action-dark:hover {
+            transform: translateY(-1px);
+        }
+
+        .action-danger {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(225, 29, 72, 0.16);
+            box-shadow: 0 12px 26px rgba(225, 29, 72, 0.08);
+        }
+
+        .action-danger:hover {
+            background: rgba(255, 241, 242, 0.94);
+        }
+
+        .action-dark {
+            background: linear-gradient(135deg, #142238 0%, #0f4c81 100%);
+            box-shadow: 0 16px 30px rgba(15, 23, 42, 0.18);
+        }
+
+        .action-ghost {
+            background: rgba(255, 255, 255, 0.86);
+            border: 1px dashed rgba(249, 115, 22, 0.24);
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.05);
+        }
+
+        .action-ghost:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 244, 235, 0.94);
+        }
+        
+        .highlight-add { animation: pulse-green 1.5s infinite; }
+        @keyframes pulse-green {
+            0%, 100% { transform: scale(1); background-color: #ecfeff; border-color: #0ea5e9; }
+            50% { transform: scale(1.05); background-color: #cffafe; border-color: #0284c7; }
+        }
+
+        .highlight-del { animation: pulse-red 0.5s infinite; }
+        @keyframes pulse-red {
+            0%, 100% { transform: scale(1); background-color: #fff1f2; border-color: #fb7185; }
+            50% { transform: scale(0.95); background-color: #ffe4e6; border-color: #e11d48; }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(251, 146, 60, 0.36); border-radius: 10px; }
+
+        .quiz-option {
+            transition: all 0.2s ease;
+            border: 1px solid rgba(249, 115, 22, 0.08);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 248, 241, 0.84) 100%);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+        }
+        .quiz-option:hover:not(:disabled) {
+            border-color: rgba(249, 115, 22, 0.24);
+            background-color: rgba(255, 244, 235, 0.94);
+            transform: translateY(-1px);
+        }
+        .quiz-correct { background-color: #10b981 !important; color: white !important; border-color: #059669 !important; }
+        .quiz-wrong { background-color: #ef4444 !important; color: white !important; border-color: #dc2626 !important; }
+
+        .toast-info {
+            background: linear-gradient(135deg, #0f4c81 0%, #fb923c 100%);
+        }
+
+        .toast-error {
+            background: linear-gradient(135deg, #e11d48 0%, #fb7185 100%);
+        }
+
+        #quiz-score {
+            padding: 0.8rem 1.1rem;
+            border-radius: 9999px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 248, 241, 0.78) 100%);
+            border: 1px solid rgba(249, 115, 22, 0.12);
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05);
+        }
+
+        @media (max-width: 640px) {
+            .glass-topbar {
+                border-radius: 1.5rem;
+            }
+        }
+
+        @keyframes pulse-live {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.38); }
+            70% { box-shadow: 0 0 0 0.45rem rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        @keyframes float-ambient {
+            0%, 100% { transform: translate3d(0, 0, 0); }
+            50% { transform: translate3d(0, -18px, 0); }
+        }
+
+        @keyframes section-reveal {
+            from {
+                opacity: 0;
+                transform: translateY(18px) scale(0.985);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 px-4 pt-4">
+        <div class="glass-topbar max-w-7xl mx-auto px-5 py-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-4">
+                <div class="brand-mark w-12 h-12 rounded-2xl flex items-center justify-center text-white">
+                    <span class="text-xl font-black">M</span>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-slate-800 tracking-tight text-xl md:text-2xl">Multi - dimensional arrays</h1>
+                    <p class="text-[11px] uppercase font-bold text-slate-500 tracking-[0.28em]">Interactive Array Learning Studio</p>
+                </div>
+            </div>
+            <div class="flex flex-col gap-3 sm:items-end">
+                <div class="sm:text-right max-w-md">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.28em]">Presented By</p>
+                    <p class="text-sm md:text-base font-bold text-slate-800">Chandra Shekar Behara, Suraj & John</p>
+                </div>
+                <div class="flex flex-wrap gap-2 sm:justify-end">
+                    <span class="status-pill"><span class="status-dot"></span>Simulator Live</span>
+                    <span id="section-indicator" class="status-pill">Fundamentals</span>
+                    <span id="system-time" class="status-pill">00:00:00</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="page-shell max-w-7xl mx-auto w-full flex-grow flex flex-col lg:flex-row px-4 pb-8 md:px-8 md:pb-10 gap-8">
+        
+        <!-- Sidebar -->
+        <aside class="w-full lg:w-64 flex-shrink-0">
+            <nav class="glass-nav rounded-[2rem] p-4 sticky top-28">
+                <ul class="space-y-1">
+                    <li>
+                        <button onclick="navTo('sec-intro')" id="nav-sec-intro" class="nav-btn nav-active w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3 font-semibold">
+                            <span>&#128161;</span> Fundamentals
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="navTo('sec-ops')" id="nav-sec-ops" class="nav-btn w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3 font-semibold">
+                            <span>&#128220;</span> Core Operations
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="navTo('sec-workshop')" id="nav-sec-workshop" class="nav-btn w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3 font-semibold">
+                            <span>&#9881;&#65039;</span> Interactive Lab
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="navTo('sec-efficiency')" id="nav-sec-efficiency" class="nav-btn w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3 font-semibold">
+                            <span>&#128200;</span> Performance
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="navTo('sec-assessment')" id="nav-sec-assessment" class="nav-btn w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3 font-semibold">
+                            <span>&#10004;&#65039;</span> Final Quiz
+                        </button>
+                    </li>
+                </ul>
+                <div class="mt-8 pt-4 border-t border-slate-100">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-3 px-2">Progress Tracker</p>
+                    <div class="progress-track w-full h-1.5 rounded-full overflow-hidden mx-2">
+                        <div id="prog-bar" class="progress-fill h-full transition-all duration-500" style="width: 20%"></div>
+                    </div>
+                </div>
+                <div class="nav-note mt-6">
+                    <p class="eyebrow mb-3">Quick Guide</p>
+                    <p class="text-sm font-semibold text-slate-800 leading-relaxed">Compare row shifts with column shifts in the lab, then jump to Performance to see why column edits scale harder.</p>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-grow min-w-0">
+            
+            <!-- SECTION: Fundamentals -->
+            <section id="sec-intro" class="content-section animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+                <div class="section-panel rounded-[2rem] p-8 md:p-10">
+                    <p class="eyebrow mb-5">Concept Overview</p>
+                    <div class="grid lg:grid-cols-[1.15fr,0.85fr] gap-8 items-start">
+                        <div class="space-y-8">
+                            <div class="space-y-5">
+                                <h2 class="text-4xl md:text-5xl font-black text-slate-800 tracking-tight">Multi-Dimensional Concepts</h2>
+                                <p class="text-slate-600 text-lg leading-relaxed max-w-3xl">
+                                    A multi-dimensional array is an <strong>array of arrays</strong>. In memory, it exists as a contiguous block, but logically we visualize it as a grid or matrix.
+                                </p>
+                            </div>
+
+                            <div class="flex flex-wrap gap-3">
+                                <span class="chip">Row-major thinking</span>
+                                <span class="chip">Index precision</span>
+                                <span class="chip">Shift-based updates</span>
+                            </div>
+
+                            <div class="grid sm:grid-cols-3 gap-4">
+                                <div class="hero-stat">
+                                    <strong>Rows & Columns</strong>
+                                    <span>Every position is defined by two coordinates working together.</span>
+                                </div>
+                                <div class="hero-stat">
+                                    <strong>Memory Block</strong>
+                                    <span>The structure is stored continuously, which makes shifts unavoidable.</span>
+                                </div>
+                                <div class="hero-stat">
+                                    <strong>Fast Access</strong>
+                                    <span>Direct indexing stays constant-time even when updates become expensive.</span>
+                                </div>
+                            </div>
+
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="soft-panel p-6 rounded-[1.5rem]">
+                                    <h3 class="font-bold text-teal-700 mb-2 flex items-center gap-2"><span>&#128209;</span> Logical Structure</h3>
+                                    <p class="text-sm text-slate-600">The grid relies on precise index management for both rows (i) and columns (j) to maintain structural integrity.</p>
+                                </div>
+                                <div class="soft-panel p-6 rounded-[1.5rem]">
+                                    <h3 class="font-bold text-teal-700 mb-2 flex items-center gap-2"><span>&#128203;</span> Shifting Requirement</h3>
+                                    <p class="text-sm text-slate-600">Because memory is sequential, adding or removing elements requires shifting others to prevent gaps or overlaps.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="code-panel rounded-[1.75rem] p-8 flex flex-col justify-center relative group">
+                                <div class="absolute top-4 right-6 text-sky-300 font-mono text-xs opacity-70 uppercase">Static Declaration</div>
+                                <pre class="font-mono text-cyan-100 text-sm"><code>int arr[3][3] = {
+  {1, 2, 3}, 
+  {4, 5, 6}, 
+  {7, 8, 9}  
+};
+
+// Access: arr[row][col]</code></pre>
+                            </div>
+                            <div class="soft-panel p-6 rounded-[1.5rem]">
+                                <p class="eyebrow mb-3">Working Lens</p>
+                                <p class="text-sm text-slate-600 leading-relaxed">The best way to read this topic is to treat every insertion or deletion like a choreography problem: find the gap, shift the surrounding values, and preserve the shape of the matrix.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: Operations -->
+            <section id="sec-ops" class="content-section hide-section space-y-8">
+                <div class="section-panel rounded-[2rem] p-8 md:p-10">
+                    <p class="eyebrow mb-5">Core Mechanics</p>
+                    <h2 class="text-3xl font-black text-slate-800 tracking-tight mb-8">The Logic of Insertion & Deletion</h2>
+                    <p class="text-slate-600 text-base leading-relaxed max-w-3xl mb-10">Row operations move larger contiguous blocks at once, while column operations revisit each row individually. That difference is the heart of the cost model.</p>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <h3 class="text-xs font-black text-emerald-500 uppercase tracking-widest px-2">Insertion Logic</h3>
+                            <div class="soft-panel p-6 rounded-[1.5rem] hover:shadow-md transition-shadow">
+                                <h4 class="font-bold text-slate-800 mb-3 text-sm uppercase">Row Insertion</h4>
+                                <p class="text-xs text-slate-500 leading-relaxed italic">Identify target row and move all following blocks downward in memory as a single group.</p>
+                            </div>
+                            <div class="soft-panel p-6 rounded-[1.5rem] hover:shadow-md transition-shadow">
+                                <h4 class="font-bold text-slate-800 mb-3 text-sm uppercase">Column Insertion</h4>
+                                <p class="text-xs text-slate-500 leading-relaxed italic">Requires traversing every row and shifting inner elements horizontally.</p>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <h3 class="text-xs font-black text-rose-500 uppercase tracking-widest px-2">Deletion Logic</h3>
+                            <div class="soft-panel p-6 rounded-[1.5rem] hover:shadow-md transition-shadow">
+                                <h4 class="font-bold text-slate-800 mb-3 text-sm uppercase">Row Deletion</h4>
+                                <p class="text-xs text-slate-500 leading-relaxed italic">Overwrite target row by shifting subsequent blocks upward in memory.</p>
+                            </div>
+                            <div class="soft-panel p-6 rounded-[1.5rem] hover:shadow-md transition-shadow">
+                                <h4 class="font-bold text-slate-800 mb-3 text-sm uppercase">Column Deletion</h4>
+                                <p class="text-xs text-slate-500 leading-relaxed italic">Iterate all rows and pull following elements leftward to fill vertical gap.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="soft-panel mt-12 p-8 rounded-[1.75rem]">
+                        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                            <h3 class="font-bold text-slate-800">Algorithm Workflow</h3>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-[0.28em]">Four-step execution path</p>
+                        </div>
+                        <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+                            <div class="step-card">
+                                <div class="step-index">01</div>
+                                <h4 class="font-bold text-slate-800 mb-2">Identify</h4>
+                                <p class="text-sm text-slate-600 leading-relaxed">Choose the exact row or column index that becomes the edit target.</p>
+                            </div>
+                            <div class="step-card">
+                                <div class="step-index">02</div>
+                                <h4 class="font-bold text-slate-800 mb-2">Shift</h4>
+                                <p class="text-sm text-slate-600 leading-relaxed">Move surrounding values so the structure stays gap-free and ordered.</p>
+                            </div>
+                            <div class="step-card">
+                                <div class="step-index">03</div>
+                                <h4 class="font-bold text-slate-800 mb-2">Resize</h4>
+                                <p class="text-sm text-slate-600 leading-relaxed">Update the logical bounds after the insertion or deletion is complete.</p>
+                            </div>
+                            <div class="step-card">
+                                <div class="step-index">04</div>
+                                <h4 class="font-bold text-slate-800 mb-2">Optimize</h4>
+                                <p class="text-sm text-slate-600 leading-relaxed">Prefer bulk moves and cleaner traversal patterns when performance matters.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: Workshop -->
+            <section id="sec-workshop" class="content-section hide-section space-y-8">
+                <div class="section-panel rounded-[2rem] p-8 md:p-10">
+                    <div class="flex flex-wrap items-end justify-between gap-4 mb-10">
+                        <div>
+                            <p class="eyebrow mb-4">Hands-On Lab</p>
+                            <h2 class="text-2xl font-black text-slate-800 tracking-tight mb-2">Interactive Laboratory</h2>
+                            <p class="text-slate-500 text-sm">Real-time simulation of shifting elements in memory.</p>
+                        </div>
+                        <span class="chip">Live shift visualizer</span>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-8">
+                        <div class="live-stat">
+                            <p>Matrix Size</p>
+                            <h3 id="live-dimensions">3 x 3</h3>
+                        </div>
+                        <div class="live-stat">
+                            <p>Cells Loaded</p>
+                            <h3 id="live-cells">9</h3>
+                        </div>
+                        <div class="live-stat">
+                            <p>Ops Executed</p>
+                            <h3 id="live-ops">0</h3>
+                        </div>
+                        <div class="live-stat">
+                            <p>Last Action</p>
+                            <h3 id="live-last-action" class="subtle">System ready</h3>
+                        </div>
+                    </div>
+
+                    <div class="grid lg:grid-cols-2 gap-12">
+                        <div class="space-y-6">
+                            <div class="soft-panel p-8 rounded-[1.75rem] border-2 border-dashed border-sky-100 flex flex-col items-center justify-center min-h-[300px]">
+                                <div id="lab-grid" class="flex flex-col gap-2 mb-6"></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="handleOp('row-add')" class="action-primary py-3 px-4 rounded-2xl text-white text-xs font-bold">Add Row</button>
+                                <button onclick="handleOp('col-add')" class="action-primary py-3 px-4 rounded-2xl text-white text-xs font-bold">Add Column</button>
+                                <button onclick="handleOp('row-del')" class="action-danger py-3 px-4 rounded-2xl text-rose-500 text-xs font-bold">Delete Row</button>
+                                <button onclick="handleOp('col-del')" class="action-danger py-3 px-4 rounded-2xl text-rose-500 text-xs font-bold">Delete Column</button>
+                                <button onclick="resetLab()" class="action-ghost col-span-2 py-3 px-4 rounded-2xl text-slate-700 text-xs font-bold">Reset Lab</button>
+                            </div>
+                        </div>
+
+                        <div class="monitor-panel rounded-[1.75rem] p-6 flex flex-col">
+                            <h3 class="text-sky-300 font-bold text-[10px] uppercase tracking-widest mb-4 border-b border-slate-800 pb-2">Event Monitor</h3>
+                            <div id="lab-log" class="flex-grow font-mono text-[9px] text-slate-500 space-y-3 h-64 overflow-y-auto pr-2 custom-scrollbar">
+                                <p class="opacity-50">System initialized. Awaiting instructions...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: Efficiency -->
+            <section id="sec-efficiency" class="content-section hide-section space-y-8">
+                <div class="section-panel rounded-[2rem] p-8 md:p-10">
+                    <p class="eyebrow mb-5">Performance View</p>
+                    <h2 class="text-3xl font-black text-slate-800 tracking-tight mb-8">Performance Metrics</h2>
+                    <div class="grid lg:grid-cols-2 gap-12">
+                        <div class="soft-panel rounded-[1.5rem] overflow-hidden">
+                            <div class="p-4 bg-white/70 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400">Complexity Matrix</div>
+                            <div class="p-6 space-y-4">
+                                <div class="flex justify-between border-b border-slate-50 pb-2">
+                                    <span class="text-sm font-bold text-slate-700">Access Time</span>
+                                    <span class="text-sm font-mono text-sky-600">O(1)</span>
+                                </div>
+                                <div class="flex justify-between border-b border-slate-50 pb-2">
+                                    <span class="text-sm font-bold text-slate-700">Insertion (Row)</span>
+                                    <span class="text-sm font-mono text-orange-500">O(N*M)</span>
+                                </div>
+                                <div class="flex justify-between border-b border-slate-50 pb-2">
+                                    <span class="text-sm font-bold text-slate-700">Deletion (Col)</span>
+                                    <span class="text-sm font-mono text-orange-500">O(N*M)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="soft-panel rounded-[1.5rem] p-6">
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <span class="chip">Constant access</span>
+                                <span class="chip">Growing shift cost</span>
+                            </div>
+                            <div class="chart-container"><canvas id="effChart"></canvas></div>
+                            <p class="text-sm text-slate-500 mt-4 leading-relaxed">As the grid expands, insertion and deletion cost grows with the number of cells touched during every shift.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: Final Quiz (10 MCQs) -->
+            <section id="sec-assessment" class="content-section hide-section space-y-8">
+                <div class="section-panel rounded-[2rem] p-8 md:p-10">
+                    <div class="flex justify-between items-end gap-4 flex-wrap mb-8">
+                        <div>
+                            <p class="eyebrow mb-4">Certification Check</p>
+                            <h2 class="text-3xl font-black text-slate-800 tracking-tight">Final Assessment</h2>
+                            <p class="text-slate-500 text-sm">Test your knowledge on Multi-D array operations.</p>
+                        </div>
+                        <div id="quiz-score" class="text-teal-700 font-black text-2xl">Score: 0/10</div>
+                    </div>
+
+                    <div id="quiz-container" class="space-y-8 max-w-3xl">
+                        <!-- Questions will be injected here -->
+                    </div>
+
+                    <div class="mt-12 pt-8 border-t border-slate-100 flex justify-center">
+                        <button onclick="resetQuiz()" class="action-dark px-8 py-3 text-white rounded-full font-bold active:scale-95">Restart Assessment</button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <div id="toast" class="toast-info fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 text-white rounded-full shadow-2xl transition-all duration-300 opacity-0 pointer-events-none translate-y-10 font-bold z-[100] backdrop-blur-xl"></div>
+
+    <script>
+        // --- CONSTANTS & DATA ---
+        let labGrid = [['A1','A2','A3'],['B1','B2','B3'],['C1','C2','C3']];
+        let opCounter = 0;
+        let chart = null;
+        let score = 0;
+        let lastAction = 'System ready';
+        const navItems = ['sec-intro', 'sec-ops', 'sec-workshop', 'sec-efficiency', 'sec-assessment'];
+        const sectionLabels = {
+            'sec-intro': 'Fundamentals',
+            'sec-ops': 'Core Operations',
+            'sec-workshop': 'Interactive Lab',
+            'sec-efficiency': 'Performance',
+            'sec-assessment': 'Final Quiz'
+        };
+
+        const questions = [
+            {
+                q: "Logically, a multi-dimensional array is often visualized as what?",
+                options: ["A single line", "A Grid or Matrix", "A tree structure", "A linked chain"],
+                correct: 1
+            },
+            {
+                q: "In physical memory, how is a multi-dimensional array stored?",
+                options: ["In random segments", "As a contiguous block", "In different files", "As scattered bytes"],
+                correct: 1
+            },
+            {
+                q: "What is the worst-case time complexity for both insertion and deletion in a 2D array?",
+                options: ["O(1)", "O(log N)", "O(N * M)", "O(N + M)"],
+                correct: 2
+            },
+            {
+                q: "During row insertion, in which direction are existing rows shifted?",
+                options: ["Upward", "Downward", "Leftward", "Nowhere"],
+                correct: 1
+            },
+            {
+                q: "Why is column deletion considered more complex than row deletion in row-major storage?",
+                options: ["Because columns are larger", "Because it requires iterating through every row", "Because memory doesn't support columns", "Because it is faster"],
+                correct: 1
+            },
+            {
+                q: "In the context of array operations, what does the 'Identify' step involve?",
+                options: ["Moving data", "Finding the target index", "Resizing memory", "Deleting elements"],
+                correct: 1
+            },
+            {
+                q: "What happens during a 'Row Deletion'?",
+                options: ["Target is overwritten and subsequent rows shift upward", "Columns shift left", "Array is cleared", "Rows shift downward"],
+                correct: 0
+            },
+            {
+                q: "Which C++ function or concept is often used for faster block memory movement?",
+                options: ["printf()", "pointers/memcpy", "cin >>", "for loops only"],
+                correct: 1
+            },
+            {
+                q: "What is 'Resize' in the Step-by-Step Deletion process?",
+                options: ["Physically growing the RAM", "Updating logical boundaries of the array", "Renaming the array", "Cleaning up the code"],
+                correct: 1
+            },
+            {
+                q: "If you have a 10x10 array and delete one row, how many rows are shifted upward if you delete index 0?",
+                options: ["1 row", "9 rows", "10 rows", "None"],
+                correct: 1
+            }
+        ];
+
+        function updateClock() {
+            const clock = document.getElementById('system-time');
+            if (clock) {
+                clock.innerText = new Date().toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            }
+        }
+
+        function updateDashboard(action = lastAction, sectionId) {
+            lastAction = action;
+            const activeSectionId = sectionId || document.querySelector('.nav-active')?.id?.replace('nav-', '') || 'sec-intro';
+            const rows = labGrid.length;
+            const cols = labGrid[0]?.length || 0;
+
+            const sectionIndicator = document.getElementById('section-indicator');
+            if (sectionIndicator) sectionIndicator.innerText = sectionLabels[activeSectionId];
+
+            const dim = document.getElementById('live-dimensions');
+            if (dim) dim.innerText = `${rows} x ${cols}`;
+
+            const cells = document.getElementById('live-cells');
+            if (cells) cells.innerText = `${rows * cols}`;
+
+            const ops = document.getElementById('live-ops');
+            if (ops) ops.innerText = `${opCounter}`;
+
+            const last = document.getElementById('live-last-action');
+            if (last) last.innerText = lastAction;
+        }
+
+        // --- NAVIGATION ---
+        function navTo(id) {
+            document.querySelectorAll('.content-section').forEach(s => {
+                s.classList.add('hide-section');
+                s.classList.remove('section-enter');
+            });
+
+            const targetSection = document.getElementById(id);
+            targetSection.classList.remove('hide-section');
+            void targetSection.offsetWidth;
+            targetSection.classList.add('section-enter');
+
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('nav-active');
+            });
+
+            const btn = document.getElementById(`nav-${id}`);
+            btn.classList.add('nav-active');
+
+            const prog = ((navItems.indexOf(id) + 1) / navItems.length) * 100;
+            document.getElementById('prog-bar').style.width = `${prog}%`;
+
+            if(id === 'sec-workshop') renderLab();
+            if(id === 'sec-efficiency') initChart();
+            if(id === 'sec-assessment') initQuiz();
+
+            updateDashboard(lastAction, id);
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showToast(msg, type = 'info') {
+            const t = document.getElementById('toast');
+            const baseClass = 'fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 text-white rounded-full shadow-2xl transition-all duration-300 font-bold z-[100] pointer-events-none backdrop-blur-xl';
+            t.innerText = msg;
+            t.className = `${baseClass} translate-y-0 opacity-100 ${type === 'error' ? 'toast-error' : 'toast-info'}`;
+            setTimeout(() => {
+                t.className = `${baseClass} translate-y-10 opacity-0 ${type === 'error' ? 'toast-error' : 'toast-info'}`;
+            }, 2500);
+        }
+
+        // --- LAB LOGIC ---
+        function renderLab(hRow = -1, hCol = -1, isAdd = true) {
+            const cont = document.getElementById('lab-grid');
+            cont.innerHTML = '';
+            labGrid.forEach((row, r) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'flex gap-2';
+                row.forEach((cell, c) => {
+                    const div = document.createElement('div');
+                    const isHighlight = r === hRow || c === hCol;
+                    div.className = `grid-cell w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-lg border-2 font-black text-[10px] shadow-sm 
+                        ${isHighlight ? (isAdd ? 'highlight-add' : 'highlight-del') : 'bg-white border-slate-200 text-slate-800'}`;
+                    div.innerText = cell;
+                    rowDiv.appendChild(div);
+                });
+                cont.appendChild(rowDiv);
+            });
+        }
+
+        function pushLog(msg, type = 'normal') {
+            const log = document.getElementById('lab-log');
+            const placeholder = log.querySelector('p');
+            if (placeholder) placeholder.remove();
+            const div = document.createElement('div');
+            const color = type === 'success' ? 'text-emerald-400' : (type === 'warn' ? 'text-rose-400' : 'text-slate-500');
+            div.className = `${color} leading-relaxed mb-2 flex items-start gap-2`;
+            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            div.innerHTML = `<span class="opacity-30 shrink-0">${timestamp}</span><span>${msg}</span>`;
+            log.prepend(div);
+        }
+
+        function handleOp(type) {
+            opCounter++;
+            const tRow = 1; 
+            const tCol = 1;
+
+            if(type === 'row-add') {
+                if(labGrid.length >= 5) {
+                    opCounter--;
+                    updateDashboard('Row insertion blocked by simulator limit');
+                    return showToast("Simulator Limit Reached", "error");
+                }
+                pushLog(`ID: Target Row 1. Shifting subsequent blocks...`);
+                const newRow = Array(labGrid[0].length).fill(`N${opCounter}`);
+                labGrid.splice(tRow, 0, newRow);
+                renderLab(tRow, -1, true);
+                pushLog(`SHIFT: Rows moved down. Complexity: O(N*M).`, "success");
+                updateDashboard('Row inserted at index 1');
+            } 
+            else if(type === 'col-add') {
+                if(labGrid[0].length >= 4) {
+                    opCounter--;
+                    updateDashboard('Column insertion blocked by simulator limit');
+                    return showToast("Simulator Limit Reached", "error");
+                }
+                pushLog(`ID: Target Col 1. Iterating Rows...`);
+                labGrid = labGrid.map(row => {
+                    const r = [...row];
+                    r.splice(tCol, 0, `+${opCounter}`);
+                    return r;
+                });
+                renderLab(-1, tCol, true);
+                pushLog(`SHIFT: Every row element shifted horizontally.`, "success");
+                updateDashboard('Column inserted at index 1');
+            }
+            else if(type === 'row-del') {
+                if(labGrid.length <= 1) {
+                    opCounter--;
+                    updateDashboard('Row deletion blocked at minimum size');
+                    return showToast("Min Limit Reached", "error");
+                }
+                renderLab(1, -1, false);
+                pushLog(`ID: Target Row 1 identified for deletion.`);
+                updateDashboard('Deleting row 1...');
+                setTimeout(() => {
+                    labGrid.splice(1, 1);
+                    renderLab();
+                    pushLog(`RESIZE: Row removed. Space contracted.`, "warn");
+                    updateDashboard('Row 1 deleted');
+                }, 400);
+            }
+            else if(type === 'col-del') {
+                if(labGrid[0].length <= 1) {
+                    opCounter--;
+                    updateDashboard('Column deletion blocked at minimum size');
+                    return showToast("Min Limit Reached", "error");
+                }
+                renderLab(-1, 1, false);
+                pushLog(`ID: Target Col 1 identified for deletion.`);
+                updateDashboard('Deleting column 1...');
+                setTimeout(() => {
+                    labGrid = labGrid.map(row => {
+                        const r = [...row];
+                        r.splice(1, 1);
+                        return r;
+                    });
+                    renderLab();
+                    pushLog(`RESIZE: Columns contracted in all rows.`, "warn");
+                    updateDashboard('Column 1 deleted');
+                }, 400);
+            }
+        }
+
+        function resetLab() {
+            labGrid = [['A1','A2','A3'],['B1','B2','B3'],['C1','C2','C3']];
+            opCounter = 0;
+            document.getElementById('lab-log').innerHTML = '<p class="opacity-50 italic">System cleared. Listening...</p>';
+            renderLab();
+            updateDashboard('Lab reset to default matrix');
+        }
+
+        // --- CHARTING ---
+        function initChart() {
+            const ctx = document.getElementById('effChart').getContext('2d');
+            if(chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['2x2', '5x5', '20x20', '50x50'],
+                    datasets: [
+                        { label: 'Access O(1)', data: [1, 1, 1, 1], borderColor: '#0f4c81', fill: false, tension: 0.1, pointRadius: 0 },
+                        { label: 'Ops Cost O(N*M)', data: [4, 25, 400, 2500], borderColor: '#f97316', fill: false, tension: 0.4, pointRadius: 2 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1200,
+                        easing: 'easeOutQuart'
+                    },
+                    scales: { y: { type: 'logarithmic', display: false }, x: { grid: { display: false } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // --- QUIZ LOGIC ---
+        function initQuiz() {
+            const cont = document.getElementById('quiz-container');
+            cont.innerHTML = '';
+            score = 0;
+            document.getElementById('quiz-score').innerText = `Score: 0/10`;
+
+            questions.forEach((q, qIdx) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'soft-panel p-6 rounded-3xl animate-in fade-in slide-in-from-left-4 duration-500';
+                qDiv.style.animationDelay = `${qIdx * 100}ms`;
+                
+                let optionsHtml = q.options.map((opt, oIdx) => `
+                    <button onclick="checkAnswer(this, ${qIdx}, ${oIdx})" class="quiz-option w-full text-left p-4 rounded-xl bg-white font-medium text-sm">
+                        <span class="opacity-50 mr-2">${String.fromCharCode(65 + oIdx)}.</span> ${opt}
+                    </button>
+                `).join('');
+
+                qDiv.innerHTML = `
+                    <p class="font-black text-slate-800 mb-6 text-base">${qIdx + 1}. ${q.q}</p>
+                    <div class="grid gap-3">${optionsHtml}</div>
+                `;
+                cont.appendChild(qDiv);
+            });
+        }
+
+        function checkAnswer(btn, qIdx, oIdx) {
+            const correctIdx = questions[qIdx].correct;
+            const parent = btn.parentElement;
+            const buttons = parent.querySelectorAll('button');
+
+            buttons.forEach(b => b.disabled = true);
+
+            if(oIdx === correctIdx) {
+                btn.classList.add('quiz-correct');
+                score++;
+                showToast("Correct Answer!", "success");
+            } else {
+                btn.classList.add('quiz-wrong');
+                buttons[correctIdx].classList.add('quiz-correct');
+                showToast("Incorrect Answer", "error");
+            }
+            document.getElementById('quiz-score').innerText = `Score: ${score}/10`;
+        }
+
+        function resetQuiz() {
+            initQuiz();
+            showToast("Quiz Restarted");
+        }
+
+        window.onload = () => {
+            updateClock();
+            setInterval(updateClock, 1000);
+            updateDashboard('System ready', 'sec-intro');
+            navTo('sec-intro');
+        };
+    </script>
+</body>
+</html>
